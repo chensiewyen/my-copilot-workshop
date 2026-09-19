@@ -8,9 +8,17 @@ const remainingCount = document.querySelector("#remaining-count");
 const themeToggle = document.querySelector("#theme-toggle");
 const filterButtons = document.querySelectorAll(".filter-button");
 const THEME_STORAGE_KEY = "todo-list-theme";
+const FILTER_STORAGE_KEY = "todo-list-filter";
+const filterOptions = ["all", "active", "completed"];
 const systemThemeQuery = window.matchMedia("(prefers-color-scheme: dark)");
 
-let currentFilter = "all";
+// 讀取並驗證上次使用的篩選條件，無效值安全回退為全部。
+function loadFilter() {
+  const savedFilter = localStorage.getItem(FILTER_STORAGE_KEY);
+  return filterOptions.includes(savedFilter) ? savedFilter : "all";
+}
+
+let currentFilter = loadFilter();
 
 // 從瀏覽器儲存空間讀取先前的待辦事項。
 function loadTodos() {
@@ -139,14 +147,20 @@ function getEmptyMessage(visibleTodoCount) {
   return "還沒有任何待辦事項,新增一個吧!";
 }
 
+// 更新篩選按鈕的選中狀態。
+function updateFilterButtons() {
+  filterButtons.forEach((filterButton) => {
+    const isActive = filterButton.dataset.filter === currentFilter;
+    filterButton.classList.toggle("active", isActive);
+    filterButton.setAttribute("aria-pressed", String(isActive));
+  });
+}
+
 filterButtons.forEach((button) => {
   button.addEventListener("click", () => {
     currentFilter = button.dataset.filter;
-    filterButtons.forEach((filterButton) => {
-      const isActive = filterButton === button;
-      filterButton.classList.toggle("active", isActive);
-      filterButton.setAttribute("aria-pressed", String(isActive));
-    });
+    localStorage.setItem(FILTER_STORAGE_KEY, currentFilter);
+    updateFilterButtons();
     renderTodos();
   });
 });
@@ -170,4 +184,5 @@ todoForm.addEventListener("submit", (event) => {
   todoInput.focus();
 });
 
+updateFilterButtons();
 renderTodos();
